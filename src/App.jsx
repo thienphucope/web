@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Upbar from "./components/Upbar";
-import CircularNav from "./components/CircularNav";
+
 
 function App() {
   return (
@@ -8,7 +8,7 @@ function App() {
       {/* Video Background */}
       <div className="fixed top-0 left-0 w-full h-full z-0 overflow-hidden bg-black">
         <iframe
-          src="https://www.youtube.com/embed/305Uc8i5RJM?autoplay=1&mute=1&loop=1&playlist=305Uc8i5RJM&controls=0&showinfo=0&rel=0"
+          src="https://www.youtube.com/embed/305Uc8i5RJM?autoplay=1&mute=1&loop=1&playlist=305Uc8i5RJM,-5E67EK6qfA,zHjAZhw_3no,acAqLYmCyFw,N-xJQfCYBLY,hAEfx62KnwQ,UktJEXODnK0,xVcRJRxDWEM,T9DiPQO_0_k,2lxJiz3gCis,Ysot4dDNCPc,2rn3IEcN3w4&controls=0&showinfo=0&rel=0&shuffle=1"
           className="absolute w-[140%] h-[105%]" 
           style={{
             top: "50%",
@@ -28,8 +28,6 @@ function App() {
       {/* Upbar cố định ở trên */}
       <Upbar />
 
-      {/* Circular Navigation */}
-      <CircularNav />
     </div>
   );
 }
