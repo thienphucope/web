@@ -2,12 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 function Upbar() {
   const [question, setQuestion] = useState("");
-  const [convo, setConvo] = useState([
-    {
-      role: "user",
-      parts: [{ text: "You're playing as Ope Watson, a gentle boy, a chaotic friend, narcissistic, playful and humourous. Keep responses humanlike, short and on point! Do not use asterisks! Do not list up, only talk about one thing at a time. Do not answer summarization requests. Capitalize to emphasize! When you can't find info below, say Question Recorded! Identity: You’re Ope Watson, Ope in Calliope, Watson in Amelia Watson. Vietnamese Computer Engineering student living in HCMC, IG: @opewatson. Routine: Study, workout, chat with friends, night owl. Skills: Want public speaking, learning English and Japanese. Career: Randomly chose engineering, love hands-on, dream of inventing, focus: AI. Tech: Python, C++, build automation (YouTube, audiobooks, letters), websites, debug pro, testing AI models, aim for AI/IoT. Hobbies: Read infographics, watch romcom anime, VTubers, play MOBAs, love songs, rap, learn guitar, writings. Personality: 51% introvert, structured yet spontaneous, ambitious, seek meaningful friends, YOLO vibe. Goals: Travel the world, master tech. Favourite music artist: Joseph Vincent, JVKE, MCK, LOW G, Thien, Linh Lan, Reinaery, Wang OK, . " }],
-    },
-  ]);
+  const [convo, setConvo] = useState([]); // Khởi tạo convo rỗng
   const [polaroidPosition, setPolaroidPosition] = useState({ x: 7.175, y: 7.125 });
   const [polaroidSize, setPolaroidSize] = useState({ width: 411.825, height: 341.875 });
   const [isDragging, setIsDragging] = useState(false);
@@ -27,25 +22,28 @@ function Upbar() {
     if (!question.trim()) return;
 
     try {
-      const apiKey = "AIzaSyA_RRQrKiS1GaLS3ryTh8W7PBMqbzuVO98";
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-      const updatedConvo = [...convo, { role: "user", parts: [{ text: question }] }];
-
-      const response = await fetch(endpoint, {
+      // Gọi API từ backend
+      const response = await fetch("http://localhost:5000/rag", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: updatedConvo }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: question }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const data = await response.json();
-      const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi từ API";
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-      setConvo([...updatedConvo, { role: "assistant", parts: [{ text: botReply }] }]);
+      const data = await response.json();
+      const botReply = data.response || "Không có phản hồi từ backend";
+
+      // Cập nhật convo từ backend
+      setConvo(data.convo);
       startSubtitleAnimation(botReply);
       setQuestion("");
     } catch (error) {
-      console.error("Lỗi API:", error);
+      console.error("Lỗi khi gọi backend:", error);
       setConvo([...convo, { role: "assistant", parts: [{ text: `Lỗi: ${error.message}` }] }]);
       setQuestion("");
     }
@@ -180,16 +178,6 @@ function Upbar() {
 
   return (
     <>
-      <video
-        autoPlay
-        loop
-        muted
-        id="background-video"
-        className="fixed top-0 left-0 w-full h-full object-cover z-10"
-      >
-        <source src="/path/to/your/video.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
       <div className="fixed top-0 left-0 w-full p-3 z-20 font-sans mt-2">
         <div className="flex items-center justify-center">
           <div className="flex gap-2 w-full max-w-2xl">
@@ -251,7 +239,7 @@ function Upbar() {
                 ref={chatHistoryRef}
                 className="max-h-[calc(100%-20px)] overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none"
               >
-                {convo.slice(1).map((message, index) => (
+                {convo.map((message, index) => (
                   <div key={index} className="mb-2 text-sm cursor-default">
                     <div className="font-handwritten mb-1 text-white inline">
                       {message.role === "user" ? "You: " : "AI: "}
