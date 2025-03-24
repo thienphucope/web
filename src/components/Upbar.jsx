@@ -23,7 +23,7 @@ function Upbar() {
 
     try {
       // Gọi API từ backend
-      const response = await fetch("https://rag-backend.onrender.com/rag", {
+      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
