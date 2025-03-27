@@ -51,7 +51,7 @@ function Upbar() {
     ]);
 
     try {
-      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+      const response = await fetch("http://127.0.0.1:5000/rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, query: question }),
@@ -374,7 +374,7 @@ function Upbar() {
         <>
           <button
             onClick={() => setShowFontMenu(!showFontMenu)}
-            className="fixed bottom-20 right-4 bg-transparent p-2 rounded-full border-2 border-white text-white font-handwritten text-base hover:border-blue-400 transition-all duration-200 z-40"
+            className="fixed bottom-24 right-4 bg-transparent p-2 rounded-full border-2 border-white text-white font-handwritten text-base hover:border-blue-400 transition-all duration-200 z-40"
           >
             Change Font
           </button>
