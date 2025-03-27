@@ -34,7 +34,7 @@ function Upbar() {
     "Verdana",
     "Comic Sans MS",
     "Charmonman",
-    "Big Caslon Medium"
+    "Big Caslon Medium",
   ];
 
   const handleAsk = async () => {
@@ -323,10 +323,10 @@ function Upbar() {
             </h3>
             <div
               ref={chatHistoryRef}
-              className="max-h-[calc(100%-20px)] overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none"
+              className="max-h-[calc(100%-20px)] overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none text-[1.3125rem]" // Font size gấp rưỡi
             >
               {convo.map((message, index) => (
-                <div key={index} className="mb-2 text-sm cursor-default">
+                <div key={index} className="mb-2 cursor-default">
                   <div className="font-handwritten mb-1 text-white inline">
                     {message.role === "user" ? `${username}: ` : "Ope: "}
                   </div>
@@ -372,7 +372,7 @@ function Upbar() {
         <>
           <button
             onClick={() => setShowFontMenu(!showFontMenu)}
-            className="fixed bottom-4 right-4 bg-transparent p-2 rounded-full border-2 border-white text-white font-handwritten text-base hover:border-blue-400 transition-all duration-200 z-40"
+            className="fixed bottom-20 right-4 bg-transparent p-2 rounded-full border-2 border-white text-white font-handwritten text-base hover:border-blue-400 transition-all duration-200 z-40"
           >
             Change Font
           </button>
@@ -385,10 +385,10 @@ function Upbar() {
                   <button
                     key={font}
                     onClick={() => handleFontChange(font)}
-                    className="p-2 text-white font-handwritten bg-transparent hover:bg-blue-400/20 rounded-md transition-all duration-200 text-left"
+                    className="p-2 text-white bg-transparent hover:bg-blue-400/20 rounded-md transition-all duration-200 text-left"
                     style={{ fontFamily: font }}
                   >
-                    {font}
+                    <span style={{ fontFamily: font }}>{font}</span> {/* Đảm bảo tên font dùng chính font đó */}
                   </button>
                 ))}
               </div>
