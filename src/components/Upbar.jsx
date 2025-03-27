@@ -22,6 +22,21 @@ function Upbar() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
 
+  // Thêm state và logic cho font
+  const [selectedFont, setSelectedFont] = useState("Charmonman"); // Font mặc định
+  const [showFontMenu, setShowFontMenu] = useState(false);
+  const availableFonts = [
+    "Patrick Hand",
+    "Arial",
+    "Times New Roman",
+    "Courier New",
+    "Georgia",
+    "Verdana",
+    "Comic Sans MS",
+    "Charmonman",
+    "Big Caslon Medium"
+  ];
+
   const handleAsk = async () => {
     if (!username.trim()) {
       alert("Vui lòng nhập username trước khi hỏi!");
@@ -36,7 +51,7 @@ function Upbar() {
     ]);
 
     try {
-      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+      const response = await fetch("http://127.0.0.1:5000/rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, query: question }),
@@ -201,6 +216,11 @@ function Upbar() {
     if (video) video.muted = false;
   };
 
+  const handleFontChange = (font) => {
+    setSelectedFont(font);
+    setShowFontMenu(false);
+  };
+
   useEffect(() => {
     if (isDragging || isResizing) {
       window.addEventListener("mousemove", handleMouseMove);
@@ -240,7 +260,7 @@ function Upbar() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={`Hỏi Ope Watson gì đó, ${username}...`}
+                placeholder={`Ask Ope Watson anything, ${username}...`}
                 className="p-2 pl-4 pr-10 rounded-full text-white w-full bg-transparent ring-2 ring-white hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base font-handwritten placeholder-gray-400 transition-all duration-200"
               />
               <button
@@ -348,6 +368,35 @@ function Upbar() {
         </div>
       )}
 
+      {username && (
+        <>
+          <button
+            onClick={() => setShowFontMenu(!showFontMenu)}
+            className="fixed bottom-4 right-4 bg-transparent p-2 rounded-full border-2 border-white text-white font-handwritten text-base hover:border-blue-400 transition-all duration-200 z-40"
+          >
+            Change Font
+          </button>
+
+          {showFontMenu && (
+            <div className="fixed bottom-12 right-4 bg-transparent p-4 rounded-lg border-2 border-white z-50">
+              <h3 className="text-lg font-handwritten mb-2 text-white">Select a font:</h3>
+              <div className="flex flex-col gap-2">
+                {availableFonts.map((font) => (
+                  <button
+                    key={font}
+                    onClick={() => handleFontChange(font)}
+                    className="p-2 text-white font-handwritten bg-transparent hover:bg-blue-400/20 rounded-md transition-all duration-200 text-left"
+                    style={{ fontFamily: font }}
+                  >
+                    {font}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       <style jsx global>{`
         @keyframes fadeIn {
           from {
@@ -371,7 +420,7 @@ function Upbar() {
           animation: fadeIn 0.5s forwards;
         }
         .font-handwritten {
-          font-family: "Patrick Hand", cursive;
+          font-family: "${selectedFont}", cursive; /* Áp dụng font động */
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -385,6 +434,10 @@ function Upbar() {
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+        }
+        /* Áp dụng font cho toàn bộ trang */
+        body, html, button, input, h1, h2, h3, div, span {
+          font-family: "${selectedFont}", cursive !important;
         }
       `}</style>
     </>
