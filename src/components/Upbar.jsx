@@ -317,31 +317,33 @@ function Upbar() {
           >
             ✕
           </button>
-          <div className="bg-transparent p-0 pt-0 h-full">
+          <div className="bg-transparent p-0 pt-0 h-full flex flex-col">
             <h3 className="text-center font-handwritten text-white mb-2 text-sm ring-white cursor-default select-none pt-0">
               Chat History
             </h3>
             <div
               ref={chatHistoryRef}
-              className="max-h-[calc(100%-20px)] overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none text-[1.3125rem]" // Font size gấp rưỡi
+              className="flex-1 overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none text-[1.3125rem] flex flex-col" // Bỏ justify-end, dùng flex-1
             >
-              {convo.map((message, index) => (
-                <div key={index} className="mb-2 cursor-default">
-                  <div className="font-handwritten mb-1 text-white inline">
-                    {message.role === "user" ? `${username}: ` : "Ope: "}
+              <div className="flex flex-col mt-auto"> {/* Thêm div wrapper với mt-auto */}
+                {convo.map((message, index) => (
+                  <div key={index} className="mb-2 cursor-default">
+                    <div className="font-handwritten mb-1 text-white inline">
+                      {message.role === "user" ? `${username}: ` : "Ope: "}
+                    </div>
+                    <div className="text-white inline font-handwritten">
+                      {message.parts[0].text}
+                      {message.role === "assistant" && (
+                        <>
+                          <br />
+                          <br />
+                        </>
+                      )}
+                    </div>
+                    <br />
                   </div>
-                  <div className="text-white inline font-handwritten">
-                    {message.parts[0].text}
-                    {message.role === "assistant" && (
-                      <>
-                        <br />
-                        <br />
-                      </>
-                    )}
-                  </div>
-                  <br />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
           <div
@@ -388,7 +390,7 @@ function Upbar() {
                     className="p-2 text-white bg-transparent hover:bg-blue-400/20 rounded-md transition-all duration-200 text-left"
                     style={{ fontFamily: font }}
                   >
-                    <span style={{ fontFamily: font }}>{font}</span> {/* Đảm bảo tên font dùng chính font đó */}
+                    <span style={{ fontFamily: font }}>{font}</span>
                   </button>
                 ))}
               </div>
