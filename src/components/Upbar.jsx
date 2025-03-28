@@ -22,8 +22,11 @@ function Upbar() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
 
+  // Thêm state để kiểm soát trạng thái gửi
+  const [isSending, setIsSending] = useState(false);
+
   // Thêm state và logic cho font
-  const [selectedFont, setSelectedFont] = useState("Charmonman"); // Font mặc định
+  const [selectedFont, setSelectedFont] = useState("Charmonman");
   const [showFontMenu, setShowFontMenu] = useState(false);
   const availableFonts = [
     "Patrick Hand",
@@ -42,19 +45,22 @@ function Upbar() {
       alert("Vui lòng nhập username trước khi hỏi!");
       return;
     }
-    if (!question.trim()) return;
+    if (!question.trim() || isSending) return; // Ngăn gửi nếu đang xử lý hoặc câu hỏi rỗng
 
+    setIsSending(true); // Đánh dấu trạng thái đang gửi
     setConvo((prev) => [
       ...prev,
       { role: "user", parts: [{ text: question }] },
       { role: "assistant", parts: [{ text: "..." }] },
     ]);
+    const currentQuestion = question; // Lưu câu hỏi hiện tại
+    setQuestion(""); // Xóa ô input ngay lập tức
 
     try {
       const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, query: question }),
+        body: JSON.stringify({ username, query: currentQuestion }),
       });
 
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -72,11 +78,11 @@ function Upbar() {
       streamResponse(botReply);
 
       if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
-      setQuestion("");
     } catch (error) {
       console.error("Lỗi khi gọi backend:", error);
       setConvo((prev) => prev.slice(0, -1).concat({ role: "assistant", parts: [{ text: `Lỗi: ${error.message}` }] }));
-      setQuestion("");
+    } finally {
+      setIsSending(false); // Kết thúc trạng thái gửi
     }
   };
 
@@ -150,7 +156,7 @@ function Upbar() {
   }, [words, currentWordIndex]);
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !isSending) { // Chỉ gửi nếu không đang xử lý
       handleAsk();
       handleUnmute();
     }
@@ -260,13 +266,15 @@ function Upbar() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={`Ask Ope Watson anything, ${username}...`}
+                placeholder={`Ask Ope anything, type m to mute/unmute...`}
                 className="p-2 pl-4 pr-10 rounded-full text-white w-full bg-transparent ring-2 ring-white hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base font-handwritten placeholder-gray-400 transition-all duration-200"
+                disabled={isSending} // Vô hiệu hóa input khi đang gửi
               />
               <button
                 onClick={handleAsk}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent p-1 text-white transition-all duration-200"
                 title="Gửi câu hỏi"
+                disabled={isSending} // Vô hiệu hóa nút khi đang gửi
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -323,9 +331,9 @@ function Upbar() {
             </h3>
             <div
               ref={chatHistoryRef}
-              className="flex-1 overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none text-[1.3125rem] flex flex-col" // Bỏ justify-end, dùng flex-1
+              className="flex-1 overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none text-[1.3125rem] flex flex-col"
             >
-              <div className="flex flex-col mt-auto"> {/* Thêm div wrapper với mt-auto */}
+              <div className="flex flex-col mt-auto">
                 {convo.map((message, index) => (
                   <div key={index} className="mb-2 cursor-default">
                     <div className="font-handwritten mb-1 text-white inline">
@@ -422,7 +430,7 @@ function Upbar() {
           animation: fadeIn 0.5s forwards;
         }
         .font-handwritten {
-          font-family: "${selectedFont}", cursive; /* Áp dụng font động */
+          font-family: "${selectedFont}", cursive;
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -437,7 +445,6 @@ function Upbar() {
           -ms-user-select: none;
           user-select: none;
         }
-        /* Áp dụng font cho toàn bộ trang */
         body, html, button, input, h1, h2, h3, div, span {
           font-family: "${selectedFont}", cursive !important;
         }
