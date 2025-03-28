@@ -94,7 +94,7 @@ function Upbar() {
     setQuestion("");
 
     try {
-      const response = await fetch("ttps://rag-backend-zh2e.onrender.com/rag", {
+      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, query: currentQuestion }),
@@ -102,7 +102,7 @@ function Upbar() {
 
       if (!response.ok) {
         const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
-        throw new Error(randomError);
+        throw new Error(`${randomError} (Error code: ${response.status})`);
       }
 
       const data = await response.json();
@@ -122,7 +122,7 @@ function Upbar() {
       console.error("Lỗi khi gọi backend:", error);
       const errorMessage =
         error.message === "Failed to fetch"
-          ? error_messages[Math.floor(Math.random() * error_messages.length)]
+          ? `${error_messages[Math.floor(Math.random() * error_messages.length)]} (Error code: Failed to fetch)`
           : error.message;
       setConvo((prev) =>
         prev.slice(0, -1).concat({ role: "assistant", parts: [{ text: errorMessage }] })
