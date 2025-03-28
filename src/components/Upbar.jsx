@@ -102,7 +102,7 @@ function Upbar() {
 
       if (!response.ok) {
         const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
-        throw new Error(`${randomError} (Error code: ${response.status})`);
+        throw new Error(`${randomError} (${response.status})`);
       }
 
       const data = await response.json();
@@ -122,7 +122,7 @@ function Upbar() {
       console.error("Lỗi khi gọi backend:", error);
       const errorMessage =
         error.message === "Failed to fetch"
-          ? `${error_messages[Math.floor(Math.random() * error_messages.length)]} (Error code: Failed to fetch)`
+          ? `${error_messages[Math.floor(Math.random() * error_messages.length)]} (f2f)`
           : error.message;
       setConvo((prev) =>
         prev.slice(0, -1).concat({ role: "assistant", parts: [{ text: errorMessage }] })
