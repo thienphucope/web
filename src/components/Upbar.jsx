@@ -288,7 +288,7 @@ function Upbar() {
     <>
       {!username && (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-transparent">
-          <div className="bg-transparent p-6 rounded-lg border-2 border-white">
+          <div className="bg-transparent p-6 rounded-lg border-2 border-white/50">
             <h2 className="text-xl font-handwritten mb-4 text-white">Enter your username!</h2>
             <input
               type="text"
@@ -296,13 +296,13 @@ function Upbar() {
               onChange={(e) => setTempUsername(e.target.value)}
               onKeyPress={handleUsernameKeyPress}
               placeholder="Username..."
-              className="p-2 rounded-md border-2 border-white w-full mb-4 font-handwritten text-white bg-transparent placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="p-2 rounded-md border-2 border-white/50 w-full mb-4 font-handwritten text-white bg-transparent placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white hover:border-white transition-all duration-200"
             />
           </div>
         </div>
       )}
       {username && (
-        <div className="fixed bottom-4 left-0 w-full p-3 z-20 font-sans flex justify-center">
+        <div className="fixed bottom-2 left-0 w-full p-3 z-20 font-sans flex justify-center">
           <div className="flex gap-3 w-full max-w-xl">
             <div className="relative w-full">
               <input
@@ -312,12 +312,12 @@ function Upbar() {
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask Ope anything, type m to mute/unmute..."
-                className="p-2 pl-4 pr-10 rounded-full text-white w-full bg-transparent ring-2 ring-white hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base font-handwritten placeholder-gray-400 transition-all duration-200"
+                className="p-3 pl-4 pr-20 rounded-full text-white w-full bg-transparent ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white text-base font-handwritten placeholder-gray-400 transition-all duration-200"
                 disabled={isSending}
               />
               <button
                 onClick={handleAsk}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent p-1 text-white transition-all duration-200"
+                className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
                 title="Gửi câu hỏi"
                 disabled={isSending}
               >
@@ -336,23 +336,23 @@ function Upbar() {
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </button>
+              <button
+                onClick={toggleModeSwitch}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
+                title={toggleMode === "history" ? "Hiện lịch sử" : "Hiện subtitle"}
+              >
+                {toggleMode === "history" ? "📋" : "📌"}
+              </button>
             </div>
-            <button
-              onClick={toggleModeSwitch}
-              className="bg-transparent p-2 rounded-full ring-2 ring-white hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-base font-semibold min-w-[40px] text-white"
-              title={toggleMode === "history" ? "Hiện lịch sử" : "Hiện subtitle"}
-            >
-              {toggleMode === "history" ? "📋" : "📌"}
-            </button>
           </div>
         </div>
       )}
       {toggleMode === "history" && username && (
         <div
           ref={polaroidRef}
-          className="fixed bg-transparent border-2 border-white shadow-lg rounded-md p-3 pt-4 transform cursor-default"
+          className="fixed bg-transparent border-2 border-white/50 shadow-lg rounded-md p-3 pt-4 transform cursor-default"
           style={{
-            bottom: "80px",
+            bottom: "85px",
             left: "50%",
             transform: "translateX(-50%)",
             width: "100%",
@@ -369,8 +369,8 @@ function Upbar() {
           >
             ✕
           </button>
-          <div className="bg-transparent p-0 pt-0 h-full flex flex-col">
-            <h3 className="text-center font-handwritten text-white mb-2 text-sm ring-white cursor-default select-none pt-0">
+          <div className="bg-transparent p-0 pt-0 h-full flex flex-col relative">
+            <h3 className="text-center font-handwritten text-white mb-2 text-base cursor-default select-none pt-0 py-1 rounded-t-md">
               Chat History
             </h3>
             <div
@@ -397,6 +397,31 @@ function Upbar() {
                 ))}
               </div>
             </div>
+            <button
+              onClick={() => setShowFontMenu(!showFontMenu)}
+              className="absolute bottom-0 right-0 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"
+            >
+              Change Font
+            </button>
+            {showFontMenu && (
+              <div className="absolute bottom-12 right-0 bg-transparent p-4 rounded-lg border-2 border-white/50 z-50">
+                <h3 className="text-lg font-handwritten mb-2 text-white py-1 rounded-t-md text-center">
+                  Select a font
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {availableFonts.map((font) => (
+                    <button
+                      key={font}
+                      onClick={() => handleFontChange(font)}
+                      className="p-2 text-white bg-transparent hover:border-white rounded-md focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 text-left"
+                      style={{ fontFamily: font }}
+                    >
+                      <span style={{ fontFamily: font }}>{font}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize" onMouseDown={handleResizeStart}>
             <svg width="10" height="10" viewBox="0 0 10 10" className="absolute bottom-1 right-1">
@@ -416,33 +441,6 @@ function Upbar() {
             {subtitleText}
           </div>
         </div>
-      )}
-      {username && (
-        <>
-          <button
-            onClick={() => setShowFontMenu(!showFontMenu)}
-            className="fixed bottom-24 right-4 bg-transparent p-2 rounded-full border-2 border-white text-white font-handwritten text-base hover:border-blue-400 transition-all duration-200 z-40"
-          >
-            Change Font
-          </button>
-          {showFontMenu && (
-            <div className="fixed bottom-12 right-4 bg-transparent p-4 rounded-lg border-2 border-white z-50">
-              <h3 className="text-lg font-handwritten mb-2 text-white">Select a font:</h3>
-              <div className="flex flex-col gap-2">
-                {availableFonts.map((font) => (
-                  <button
-                    key={font}
-                    onClick={() => handleFontChange(font)}
-                    className="p-2 text-white bg-transparent hover:bg-blue-400/20 rounded-md transition-all duration-200 text-left"
-                    style={{ fontFamily: font }}
-                  >
-                    <span style={{ fontFamily: font }}>{font}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
       )}
       <style jsx global>{`
         @keyframes fadeIn {
