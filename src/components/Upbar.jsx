@@ -289,13 +289,13 @@ function Upbar() {
       {!username && (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-transparent">
           <div className="bg-transparent p-6 rounded-lg border-2 border-white/50">
-            <h2 className="text-xl font-handwritten mb-4 text-white">Enter your username!</h2>
+            <h2 className="text-xl font-handwritten mb-4 text-white">Your questions, my memory—no judgment!</h2>
             <input
               type="text"
               value={tempUsername}
               onChange={(e) => setTempUsername(e.target.value)}
               onKeyPress={handleUsernameKeyPress}
-              placeholder="Username..."
+              placeholder="Enter your username..."
               className="p-2 rounded-md border-2 border-white/50 w-full mb-4 font-handwritten text-white bg-transparent placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white hover:border-white transition-all duration-200"
             />
           </div>
@@ -318,7 +318,7 @@ function Upbar() {
               <button
                 onClick={handleAsk}
                 className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
-                title="Gửi câu hỏi"
+                title=""
                 disabled={isSending}
               >
                 <svg
@@ -339,7 +339,7 @@ function Upbar() {
               <button
                 onClick={toggleModeSwitch}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
-                title={toggleMode === "history" ? "Hiện lịch sử" : "Hiện subtitle"}
+                title={toggleMode === "history" ? "" : ""}
               >
                 {toggleMode === "history" ? "📋" : "📌"}
               </button>
