@@ -289,7 +289,7 @@ function Upbar() {
       {!username && (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-transparent">
           <div className="bg-transparent p-6 rounded-lg border-2 border-white/50">
-            <h2 className="text-xl font-handwritten mb-4 text-white">Your questions, my memory—no judgment!</h2>
+            <h2 className="text-sm font-handwritten mb-4 text-white">Your questions, my memory—no judgment!</h2>
             <input
               type="text"
               value={tempUsername}
@@ -311,7 +311,7 @@ function Upbar() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask Ope anything, type m to mute/unmute..."
+                placeholder="Ask Ope Watson anything"
                 className="p-3 pl-4 pr-20 rounded-full text-white w-full bg-transparent ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white text-base font-handwritten placeholder-gray-400 transition-all duration-200"
                 disabled={isSending}
               />
