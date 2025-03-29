@@ -17,7 +17,7 @@ const updateUserActivity = (username) => {
 const isUserInactive = (username) => {
   const lastActive = userLastActivity.get(username);
   if (!lastActive) return true; // If no activity recorded, consider inactive
-  const fiveMinutes = 1 * 60 * 1000; // 5 minutes in milliseconds
+  const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
   return Date.now() - lastActive >= fiveMinutes;
 };
 
@@ -84,7 +84,7 @@ const callStatus = async () => {
 // Function to start the background status job (runs continuously)
 const startStatusJob = () => {
   callStatus();
-  const statusInterval = 30000;//5 * 60 * 1000; // 5 minutes
+  const statusInterval = 10*60*1000;//5 * 60 * 1000; // 5 minutes
   setInterval(callStatus, statusInterval);
 };
 
