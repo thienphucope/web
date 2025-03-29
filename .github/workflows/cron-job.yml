@@ -1,12 +1,16 @@
-name: Gửi yêu cầu cURL mỗi 10 phút
+name: Send cURL request every 10 minutes
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Chạy mỗi 10 phút
+    - cron: '*/2 * * * *'
+  workflow_dispatch:
 
 jobs:
   curl_request:
     runs-on: ubuntu-latest
     steps:
-      - name: Gửi yêu cầu cURL đến /status
-        run: curl -m 30 -X GET "https://rag-backend-zh2e.onrender.com/status"
+      - name: Send cURL request to status endpoint
+        run: |
+          curl -m 60 -X GET "https://rag-backend-zh2e.onrender.com/status" \
+          -H "Accept: application/json" \
+          -w "\nHTTP Status: %{http_code}\nTime: %{time_total}s\n"
