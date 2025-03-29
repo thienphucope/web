@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { startStatusJob, updateUserActivity } from "./cronjob.js";
 
 const error_messages = [
   "You can’t touch Ope because Ope is too bright! ✨",
@@ -59,23 +60,23 @@ function Upbar() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [selectedFont, setSelectedFont] = useState("Charmonman");
-  const [showFontMenu, setShowFontMenu] = useState(false);
+  const [awaitingFontChoice, setAwaitingFontChoice] = useState(false);
 
   const polaroidRef = useRef(null);
   const inputRef = useRef(null);
   const chatHistoryRef = useRef(null);
 
-  const availableFonts = [
-    "Patrick Hand",
-    "Arial",
-    "Times New Roman",
-    "Courier New",
-    "Georgia",
-    "Verdana",
-    "Comic Sans MS",
-    "Charmonman",
-    "Big Caslon Medium",
-  ];
+  const fontOptions = {
+    "Arial": { label: "Ubiquitous sans-serif", message: "A safe choice—some might say too safe!" },
+    "Times New Roman": { label: "Traditional serif", message: "Sticking with the classics, are we?" },
+    "Courier New": { label: "Monospaced typewriter", message: "Feeling nostalgic for the typewriter era?" },
+    "Georgia": { label: "Elegant serif", message: "A touch of class with every letter!" },
+    "Verdana": { label: "Screen-optimized sans-serif", message: "Prioritizing readability—good call!" },
+    "Charmonman": { label: "Handwritten script", message: "Ope likes this :D" },
+    "Inter": { label: "Modern sans-serif", message: "Embracing the future of typography!" }
+  };
+
+  const availableFonts = Object.keys(fontOptions);
 
   const handleAsk = async () => {
     if (!username.trim()) {
@@ -88,36 +89,53 @@ function Upbar() {
     setConvo((prev) => [
       ...prev,
       { role: "user", parts: [{ text: question }] },
-      { role: "assistant", parts: [{ text: "..." }] },
+      { role: "assistant", parts: [{ text: "Thinking" }] },
     ]);
     const currentQuestion = question;
     setQuestion("");
+    updateUserActivity(username); // Track user activity on question submission
 
     try {
-      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, query: currentQuestion }),
-      });
+      if (awaitingFontChoice) {
+        const numberMatch = currentQuestion.match(/\d+/);
+        const fontIndex = numberMatch ? parseInt(numberMatch[0], 10) - 1 : -1;
+        const selected = fontIndex >= 0 && fontIndex < availableFonts.length ? availableFonts[fontIndex] : "Charmonman";
+        setSelectedFont(selected);
+        const fontMessage = fontOptions[selected].message;
+        setConvo((prev) => [
+          ...prev.slice(0, -2),
+          { role: "assistant", parts: [{ text: "" }] },
+        ]);
+        setStreamingText("");
+        setIsStreaming(true);
+        streamResponse(`${fontMessage}`);
+        setAwaitingFontChoice(false);
+      } else {
+        const response = await fetch("http://127.0.0.1:5000/rag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, query: currentQuestion }),
+        });
 
-      if (!response.ok) {
-        const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
-        throw new Error(`${randomError} (${response.status})`);
+        if (!response.ok) {
+          const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
+          throw new Error(`${randomError} (${response.status})`);
+        }
+
+        const data = await response.json();
+        const botReply = data.response || "Không có phản hồi từ backend";
+
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
+          return newConvo;
+        });
+        setStreamingText("");
+        setIsStreaming(true);
+        streamResponse(botReply);
+
+        if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
       }
-
-      const data = await response.json();
-      const botReply = data.response || "Không có phản hồi từ backend";
-
-      setConvo((prev) => {
-        const newConvo = [...prev];
-        newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
-        return newConvo;
-      });
-      setStreamingText("");
-      setIsStreaming(true);
-      streamResponse(botReply);
-
-      if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
     } catch (error) {
       console.error("Lỗi khi gọi backend:", error);
       const errorMessage =
@@ -148,7 +166,7 @@ function Upbar() {
         clearInterval(interval);
         setIsStreaming(false);
       }
-    }, 50);
+    }, 5);
   };
 
   useEffect(() => {
@@ -268,9 +286,18 @@ function Upbar() {
     if (video) video.muted = false;
   };
 
-  const handleFontChange = (font) => {
-    setSelectedFont(font);
-    setShowFontMenu(false);
+  const handleFontChange = () => {
+    const fontList = availableFonts
+      .map((font, index) => `${index + 1}. ${fontOptions[font].label}`)
+      .join("\n");
+    setConvo((prev) => [
+      ...prev,
+      { role: "assistant", parts: [{ text: "" }] },
+    ]);
+    setStreamingText("");
+    setIsStreaming(true);
+    streamResponse(`What is your favourite font? Write a number!\n${fontList}`);
+    setAwaitingFontChoice(true);
   };
 
   useEffect(() => {
@@ -283,6 +310,11 @@ function Upbar() {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, isResizing]);
+
+  useEffect(() => {
+    startStatusJob(); 
+  }, []);
+  
 
   return (
     <>
@@ -350,7 +382,7 @@ function Upbar() {
       {toggleMode === "history" && username && (
         <div
           ref={polaroidRef}
-          className="fixed bg-transparent border-2 border-white/50 shadow-lg rounded-md p-3 pt-4 transform cursor-default"
+          className="fixed bg-transparent border-2 border-white，随后 shadow-lg rounded-md p-3 pt-4 transform cursor-default"
           style={{
             bottom: "85px",
             left: "50%",
@@ -383,7 +415,7 @@ function Upbar() {
                     <div className="font-handwritten mb-1 text-white inline">
                       {message.role === "user" ? `${username}: ` : "Ope: "}
                     </div>
-                    <div className="text-white inline font-handwritten">
+                    <div className="text-white inline font-handwritten break-words whitespace-pre-line">
                       {message.parts[0].text}
                       {message.role === "assistant" && (
                         <>
@@ -398,30 +430,11 @@ function Upbar() {
               </div>
             </div>
             <button
-              onClick={() => setShowFontMenu(!showFontMenu)}
+              onClick={handleFontChange}
               className="absolute bottom-0 right-0 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"
             >
               Change Font
             </button>
-            {showFontMenu && (
-              <div className="absolute bottom-12 right-0 bg-transparent p-4 rounded-lg border-2 border-white/50 z-50">
-                <h3 className="text-lg font-handwritten mb-2 text-white py-1 rounded-t-md text-center">
-                  Select a font
-                </h3>
-                <div className="flex flex-col gap-2">
-                  {availableFonts.map((font) => (
-                    <button
-                      key={font}
-                      onClick={() => handleFontChange(font)}
-                      className="p-2 text-white bg-transparent hover:border-white rounded-md focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 text-left"
-                      style={{ fontFamily: font }}
-                    >
-                      <span style={{ fontFamily: font }}>{font}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           <div className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize" onMouseDown={handleResizeStart}>
             <svg width="10" height="10" viewBox="0 0 10 10" className="absolute bottom-1 right-1">
