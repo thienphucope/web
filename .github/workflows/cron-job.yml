@@ -1,0 +1,12 @@
+name: Gửi yêu cầu cURL mỗi 10 phút
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Chạy mỗi 10 phút
+
+jobs:
+  curl_request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gửi yêu cầu cURL đến /status
+        run: curl -m 30 -X GET "https://rag-backend-zh2e.onrender.com/status"

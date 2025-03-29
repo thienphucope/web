@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { startStatusJob, updateUserActivity } from "./cronjob.js";
+import { startStatusJob, updateUserActivity } from "./cronjob.js";//bỏ startStatus job chuyền sang github workflow
 
 const error_messages = [
   "You can’t touch Ope because Ope is too bright! ✨",
@@ -311,9 +311,7 @@ function Upbar() {
     };
   }, [isDragging, isResizing]);
 
-  useEffect(() => {
-    startStatusJob(); 
-  }, []);
+  
   
 
   return (
