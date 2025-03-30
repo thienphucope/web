@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { startStatusJob, updateUserActivity } from "./cronjob.js";//bỏ startStatus job chuyền sang github workflow
+import { updateUserActivity } from "./cronjob.js"; // Đã bỏ startStatusJob
 
 const error_messages = [
   "You can’t touch Ope because Ope is too bright! ✨",
@@ -78,6 +78,17 @@ function Upbar() {
 
   const availableFonts = Object.keys(fontOptions);
 
+  const welcomeMessage = `Welcome, ${username}! I am Ope Watson's digital twin, minus the body, emotions, and the ability to make good life choices. Want to know his secrets? I might ACCIDENTALLY share. 🤭✨`;
+
+  useEffect(() => {
+    if (username && convo.length === 0) {
+      setConvo([{ role: "assistant", parts: [{ text: "" }] }]);
+      setStreamingText("");
+      setIsStreaming(true);
+      streamResponse(welcomeMessage);
+    }
+  }, [username]);
+
   const handleAsk = async () => {
     if (!username.trim()) {
       alert("Vui lòng nhập username trước khi hỏi!");
@@ -93,7 +104,7 @@ function Upbar() {
     ]);
     const currentQuestion = question;
     setQuestion("");
-    updateUserActivity(username); // Track user activity on question submission
+    updateUserActivity(username);
 
     try {
       if (awaitingFontChoice) {
@@ -165,6 +176,9 @@ function Upbar() {
       } else {
         clearInterval(interval);
         setIsStreaming(false);
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
       }
     }, 5);
   };
@@ -311,15 +325,12 @@ function Upbar() {
     };
   }, [isDragging, isResizing]);
 
-  
-  
-
   return (
     <>
       {!username && (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-transparent">
           <div className="bg-transparent p-6 rounded-lg border-2 border-white/50">
-            <h2 className="text-sm font-handwritten mb-4 text-white">Your questions, my memory—no judgment!</h2>
+            <h2 className="text-xl font-handwritten mb-4 text-white">Ope Watson's AI</h2>
             <input
               type="text"
               value={tempUsername}
@@ -380,7 +391,7 @@ function Upbar() {
       {toggleMode === "history" && username && (
         <div
           ref={polaroidRef}
-          className="fixed bg-transparent border-2 border-white，随后 shadow-lg rounded-md p-3 pt-4 transform cursor-default"
+          className="fixed bg-transparent border-2 border-white shadow-lg rounded-md p-3 pt-4 transform cursor-default"
           style={{
             bottom: "85px",
             left: "50%",
