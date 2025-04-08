@@ -1,19 +1,24 @@
-import React, { useEffect, useRef } from "react";
-import Upbar from "./components/Upbar";
+import React, { useEffect, useRef, useState } from "react";
+import Upbar from "./components/Upbar/Upbar";
 
 function App() {
   const playerRef = useRef(null);
   const playerInstance = useRef(null);
+  const upbarRef = useRef(null);
+  const [username, setUsername] = useState("");
+  const [tempUsername, setTempUsername] = useState("");
+  const [upbarPosition, setUpbarPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Hàm này sẽ được gọi khi API YouTube đã sẵn sàng
     window.onYouTubeIframeAPIReady = () => {
       playerInstance.current = new window.YT.Player(playerRef.current, {
         height: "1080",
         width: "1920",
         playerVars: {
           listType: "playlist",
-          list: "PLpiBBQ_53Fb6ncNxd07dpUsEzL5JHrrk5", // Thay thế bằng ID của playlist YouTube của bạn
+          list: "PLpiBBQ_53Fb6ncNxd07dpUsEzL5JHrrk5",
           autoplay: 1,
           mute: 1,
           controls: 0,
@@ -27,7 +32,6 @@ function App() {
       });
     };
 
-    // Tải API YouTube nếu chưa được tải
     if (!window.YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -37,7 +41,6 @@ function App() {
       window.onYouTubeIframeAPIReady();
     }
 
-    // Thêm trình nghe sự kiện bàn phím
     const handleKeyDown = (event) => {
       const activeElement = document.activeElement;
       const isInputFocused =
@@ -57,7 +60,6 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    // Cleanup
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       if (playerInstance.current) {
@@ -68,9 +70,46 @@ function App() {
 
   const onPlayerReady = (event) => {
     const player = event.target;
-    player.setShuffle(true); // Bật chế độ shuffle
-    player.playVideo(); // Bắt đầu phát video
+    player.setShuffle(true);
+    player.playVideo();
   };
+
+  const handleUsernameKeyPress = (e) => {
+    if (e.key === "Enter" && tempUsername.trim()) {
+      setUsername(tempUsername.trim());
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    if (upbarRef.current) {
+      const rect = upbarRef.current.getBoundingClientRect();
+      setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      setIsDragging(true);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && upbarRef.current) {
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      setUpbarPosition({ x: newX, y: newY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   return (
     <div className="bg-gray-200 relative font-sans h-screen overflow-hidden">
@@ -89,8 +128,30 @@ function App() {
         <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50"></div>
       </div>
 
+      {/* Username Input */}
+      {!username && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 bg-transparent">
+          <div className="bg-transparent p-6 rounded-lg border-2 border-white/50 w-[300px]">
+            <h2 className="text-xl font-handwritten mb-4 text-white">Ope Watson's AI</h2>
+            <input
+              type="text"
+              value={tempUsername}
+              onChange={(e) => setTempUsername(e.target.value)}
+              onKeyPress={handleUsernameKeyPress}
+              placeholder="Enter your username..."
+              className="p-2 rounded-md border-2 border-white/50 w-full mb-4 font-handwritten text-white bg-transparent placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white hover:border-white transition-all duration-200"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Upbar */}
-      <Upbar />
+      <div
+        ref={upbarRef}
+        className="fixed left-2 right-2 top-2 bottom-2 mx-auto w-full max-w-full md:w-1/2 p-3 z-20 font-sans"
+      >
+        <Upbar username={username} />
+      </div>
     </div>
   );
 }

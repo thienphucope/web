@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { updateUserActivity } from "./cronjob.js"; // Đã bỏ startStatusJob
+import SearchBar from "./SearchBar";
+import ChatHistory from "./ChatHistory";
+import SubtitleDisplay from "./SubtitleDisplay";
 
 const error_messages = [
   "You can’t touch Ope because Ope is too bright! ✨",
@@ -41,13 +43,11 @@ const error_messages = [
   "Ope just quantum-tunneled into another dimension. Please hold. 🌀",
 ];
 
-function Upbar() {
-  const [username, setUsername] = useState("");
-  const [tempUsername, setTempUsername] = useState("");
+
+const Upbar = ({ username }) => {
   const [question, setQuestion] = useState("");
   const [convo, setConvo] = useState([]);
-  const [polaroidPosition, setPolaroidPosition] = useState({ x: 7.175, y: 7.125 });
-  const [polaroidSize, setPolaroidSize] = useState({ width: 411.825, height: 341.875 });
+  const [polaroidSize, setPolaroidSize] = useState({ width: 300, height: 500 });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -63,8 +63,8 @@ function Upbar() {
   const [awaitingFontChoice, setAwaitingFontChoice] = useState(false);
 
   const polaroidRef = useRef(null);
-  const inputRef = useRef(null);
   const chatHistoryRef = useRef(null);
+  const searchBarInputRef = useRef(null);
 
   const fontOptions = {
     "Arial": { label: "Ubiquitous sans-serif", message: "A safe choice—some might say too safe!" },
@@ -75,7 +75,6 @@ function Upbar() {
     "Charmonman": { label: "Handwritten script", message: "Ope likes this :D" },
     "Inter": { label: "Modern sans-serif", message: "Embracing the future of typography!" }
   };
-
   const availableFonts = Object.keys(fontOptions);
 
   const welcomeMessage = `Welcome, ${username}! I am Ope Watson's digital twin, minus the body, emotions, and the ability to make good life choices. Want to know his secrets? I might ACCIDENTALLY share. 🤭✨`;
@@ -91,7 +90,7 @@ function Upbar() {
 
   const handleAsk = async () => {
     if (!username.trim()) {
-      alert("Vui lòng nhập username trước khi hỏi!");
+      alert("Please enter a username before asking!");
       return;
     }
     if (!question.trim() || isSending) return;
@@ -104,13 +103,15 @@ function Upbar() {
     ]);
     const currentQuestion = question;
     setQuestion("");
-    updateUserActivity(username);
 
     try {
       if (awaitingFontChoice) {
         const numberMatch = currentQuestion.match(/\d+/);
         const fontIndex = numberMatch ? parseInt(numberMatch[0], 10) - 1 : -1;
-        const selected = fontIndex >= 0 && fontIndex < availableFonts.length ? availableFonts[fontIndex] : "Charmonman";
+        const selected =
+          fontIndex >= 0 && fontIndex < availableFonts.length
+            ? availableFonts[fontIndex]
+            : "Charmonman";
         setSelectedFont(selected);
         const fontMessage = fontOptions[selected].message;
         setConvo((prev) => [
@@ -122,7 +123,7 @@ function Upbar() {
         streamResponse(`${fontMessage}`);
         setAwaitingFontChoice(false);
       } else {
-        const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+        const response = await fetch("http://127.0.0.1:5000/rag", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, query: currentQuestion }),
@@ -134,7 +135,7 @@ function Upbar() {
         }
 
         const data = await response.json();
-        const botReply = data.response || "Không có phản hồi từ backend";
+        const botReply = data.response || "No response from backend";
 
         setConvo((prev) => {
           const newConvo = [...prev];
@@ -148,7 +149,7 @@ function Upbar() {
         if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
       }
     } catch (error) {
-      console.error("Lỗi khi gọi backend:", error);
+      console.error("Error calling backend:", error);
       const errorMessage =
         error.message === "Failed to fetch"
           ? `${error_messages[Math.floor(Math.random() * error_messages.length)]} (f2f)`
@@ -172,22 +173,22 @@ function Upbar() {
           newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: currentText }] };
           return newConvo;
         });
+        if (chatHistoryRef.current) {
+          chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+        }
         index++;
       } else {
         clearInterval(interval);
         setIsStreaming(false);
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
       }
     }, 5);
   };
 
   useEffect(() => {
-    if (chatHistoryRef.current) {
+    if (chatHistoryRef.current && toggleMode === "history") {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
-  }, [convo]);
+  }, [convo, toggleMode]);
 
   const startSubtitleAnimation = (text) => {
     const sentences = text.split(/(?<=[.!?])\s+/);
@@ -233,30 +234,6 @@ function Upbar() {
     }
   }, [words, currentWordIndex]);
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !isSending) {
-      handleAsk();
-      handleUnmute();
-    }
-  };
-
-  const handleUsernameKeyPress = (e) => {
-    if (e.key === "Enter" && tempUsername.trim()) {
-      setUsername(tempUsername.trim());
-    }
-  };
-
-  useEffect(() => {
-    const handleSlashPress = (e) => {
-      if (e.key === "/") {
-        e.preventDefault();
-        inputRef.current.focus();
-      }
-    };
-    window.addEventListener("keydown", handleSlashPress);
-    return () => window.removeEventListener("keydown", handleSlashPress);
-  }, []);
-
   const handleMouseDown = (e) => {
     e.stopPropagation();
     if (polaroidRef.current && !isResizing) {
@@ -268,10 +245,10 @@ function Upbar() {
 
   const handleMouseMove = (e) => {
     if (isDragging) {
-      setPolaroidPosition({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
+      // Drag logic handled in App.jsx
     } else if (isResizing) {
-      const newWidth = Math.max(200, e.clientX - polaroidPosition.x);
-      const newHeight = Math.max(200, e.clientY - polaroidPosition.y);
+      const newWidth = Math.max(200, e.clientX - polaroidRef.current.getBoundingClientRect().left);
+      const newHeight = Math.max(200, e.clientY - polaroidRef.current.getBoundingClientRect().top);
       setPolaroidSize({ width: newWidth, height: newHeight });
     }
   };
@@ -286,18 +263,12 @@ function Upbar() {
     setIsResizing(true);
   };
 
-  const handleClose = (e) => {
-    e.stopPropagation();
+  const handleClose = () => {
     setToggleMode("history");
   };
 
   const toggleModeSwitch = () => {
     setToggleMode(toggleMode === "history" ? "subtitle" : "history");
-  };
-
-  const handleUnmute = () => {
-    const video = document.getElementById("background-video");
-    if (video) video.muted = false;
   };
 
   const handleFontChange = () => {
@@ -315,6 +286,26 @@ function Upbar() {
   };
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      const activeElement = document.activeElement;
+      const isInputFocused =
+        activeElement.tagName === "INPUT" ||
+        activeElement.tagName === "TEXTAREA" ||
+        activeElement.isContentEditable;
+
+      if (e.key === "/" && !isInputFocused) {
+        e.preventDefault();
+        if (searchBarInputRef.current) {
+          searchBarInputRef.current.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     if (isDragging || isResizing) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
@@ -326,141 +317,43 @@ function Upbar() {
   }, [isDragging, isResizing]);
 
   return (
-    <>
-      {!username && (
-        <div className="fixed inset-0 flex justify-center items-center z-50 bg-transparent">
-          <div className="bg-transparent p-6 rounded-lg border-2 border-white/50">
-            <h2 className="text-xl font-handwritten mb-4 text-white">Ope Watson's AI</h2>
-            <input
-              type="text"
-              value={tempUsername}
-              onChange={(e) => setTempUsername(e.target.value)}
-              onKeyPress={handleUsernameKeyPress}
-              placeholder="Enter your username..."
-              className="p-2 rounded-md border-2 border-white/50 w-full mb-4 font-handwritten text-white bg-transparent placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white hover:border-white transition-all duration-200"
-            />
-          </div>
-        </div>
-      )}
+    <div className="w-full h-full flex flex-col items-center justify-between">
       {username && (
-        <div className="fixed bottom-2 left-0 w-full p-3 z-20 font-sans flex justify-center">
-          <div className="flex gap-3 w-full max-w-xl">
-            <div className="relative w-full">
-              <input
-                ref={inputRef}
-                type="text"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask Ope Watson anything"
-                className="p-3 pl-4 pr-20 rounded-full text-white w-full bg-transparent ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white text-base font-handwritten placeholder-gray-400 transition-all duration-200"
-                disabled={isSending}
+        <div className="flex-1 w-full flex flex-col items-center overflow-hidden">
+          {/* Phần nội dung chính: ChatHistory hoặc SubtitleDisplay */}
+          <div className="flex-1 w-full overflow-y-auto overflow-x-hidden">
+            {toggleMode === "history" && (
+              <ChatHistory
+                convo={convo}
+                username={username}
+                handleClose={handleClose}
+                handleFontChange={handleFontChange}
+                polaroidSize={polaroidSize}
+                handleMouseDown={handleMouseDown}
+                handleResizeStart={handleResizeStart}
+                selectedFont={selectedFont}
+                chatHistoryRef={chatHistoryRef}
               />
-              <button
-                onClick={handleAsk}
-                className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
-                title=""
-                disabled={isSending}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-              </button>
-              <button
-                onClick={toggleModeSwitch}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
-                title={toggleMode === "history" ? "" : ""}
-              >
-                {toggleMode === "history" ? "📋" : "📌"}
-              </button>
-            </div>
+            )}
+            {toggleMode === "subtitle" && showSubtitle && (
+              <SubtitleDisplay
+                showSubtitle={showSubtitle}
+                subtitleText={subtitleText}
+                isFadingOut={currentWordIndex >= words.length}
+              />
+            )}
           </div>
-        </div>
-      )}
-      {toggleMode === "history" && username && (
-        <div
-          ref={polaroidRef}
-          className="fixed bg-transparent border-2 border-white shadow-lg rounded-md p-3 pt-4 transform cursor-default"
-          style={{
-            bottom: "85px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "100%",
-            maxWidth: "42rem",
-            height: "calc(100vh - 100px)",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-          }}
-          onMouseDown={handleMouseDown}
-          onClick={handleUnmute}
-        >
-          <button
-            className="absolute top-[-2px] right-[-2px] text-gray-400 hover:text-white transition-colors z-10 bg-transparent border-0 outline-none"
-            onClick={handleClose}
-          >
-            ✕
-          </button>
-          <div className="bg-transparent p-0 pt-0 h-full flex flex-col relative">
-            <h3 className="text-center font-handwritten text-white mb-2 text-base cursor-default select-none pt-0 py-1 rounded-t-md">
-              Chat History
-            </h3>
-            <div
-              ref={chatHistoryRef}
-              className="flex-1 overflow-y-auto bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-none text-[1.3125rem] flex flex-col"
-            >
-              <div className="flex flex-col mt-auto">
-                {convo.map((message, index) => (
-                  <div key={index} className="mb-2 cursor-default">
-                    <div className="font-handwritten mb-1 text-white inline">
-                      {message.role === "user" ? `${username}: ` : "Ope: "}
-                    </div>
-                    <div className="text-white inline font-handwritten break-words whitespace-pre-line">
-                      {message.parts[0].text}
-                      {message.role === "assistant" && (
-                        <>
-                          <br />
-                          <br />
-                        </>
-                      )}
-                    </div>
-                    <br />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <button
-              onClick={handleFontChange}
-              className="absolute bottom-0 right-0 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"
-            >
-              Change Font
-            </button>
-          </div>
-          <div className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize" onMouseDown={handleResizeStart}>
-            <svg width="10" height="10" viewBox="0 0 10 10" className="absolute bottom-1 right-1">
-              <path d="M0,10 L10,0 L10,10 Z" fill="rgba(255,255,255,0.3)" />
-            </svg>
-          </div>
-        </div>
-      )}
-      {showSubtitle && toggleMode === "subtitle" && username && (
-        <div className="fixed inset-0 flex justify-center items-center z-30 pointer-events-none">
-          <div
-            className="text-white text-2xl font-handwritten animate-fadeIn cursor-default select-none max-w-[60%] text-center"
-            style={{
-              animation: currentWordIndex >= words.length ? "fadeOut 1s forwards" : "fadeIn 0.5s forwards",
-            }}
-          >
-            {subtitleText}
+          {/* SearchBar luôn hiển thị */}
+          <div className="p-3 w-full flex justify-center">
+            <SearchBar
+              question={question}
+              setQuestion={setQuestion}
+              handleAsk={handleAsk}
+              toggleModeSwitch={toggleModeSwitch}
+              toggleMode={toggleMode}
+              isSending={isSending}
+              inputRef={searchBarInputRef}
+            />
           </div>
         </div>
       )}
@@ -502,20 +395,9 @@ function Upbar() {
           -ms-user-select: none;
           user-select: none;
         }
-        body,
-        html,
-        button,
-        input,
-        h1,
-        h2,
-        h3,
-        div,
-        span {
-          font-family: "${selectedFont}", cursive !important;
-        }
       `}</style>
-    </>
+    </div>
   );
-}
+};
 
 export default Upbar;
