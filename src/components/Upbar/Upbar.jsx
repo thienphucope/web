@@ -116,7 +116,7 @@ const Upbar = ({ username }) => {
         setSelectedFont(selected);
         const fontMessage = fontOptions[selected].message;
         setConvo((prev) => [
-          ...prev.slice(0, - погодите2),
+          ...prev.slice(0, -1),
           { role: "assistant", parts: [{ text: "" }] },
         ]);
         setStreamingText("");
