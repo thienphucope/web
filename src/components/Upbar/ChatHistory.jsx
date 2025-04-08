@@ -5,11 +5,12 @@ const ChatHistory = ({
   username,
   handleClose,
   handleFontChange,
+  handleFindBook,
   polaroidSize,
   handleMouseDown,
   handleResizeStart,
   selectedFont,
-  chatHistoryRef, // Nhận ref từ Upbar
+  chatHistoryRef,
 }) => {
   const polaroidRef = useRef(null);
 
@@ -19,6 +20,7 @@ const ChatHistory = ({
       className="bg-transparent border-2 border-white shadow-lg rounded-md p-3 pt-4 transform cursor-default w-full h-full"
       style={{
         maxWidth: "100%",
+        minWidth: "320px", // Đảm bảo container đủ rộng
       }}
       onMouseDown={handleMouseDown}
     >
@@ -33,7 +35,7 @@ const ChatHistory = ({
           Chat History
         </h3>
         <div
-          ref={chatHistoryRef} // Sử dụng ref được truyền từ Upbar
+          ref={chatHistoryRef}
           className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-text text-[1.3125rem] flex flex-col"
         >
           <div className="flex flex-col mt-auto">
@@ -56,6 +58,14 @@ const ChatHistory = ({
             ))}
           </div>
         </div>
+        {/* Nút Find Book */}
+        <button
+          onClick={handleFindBook}
+          className="absolute bottom-0 right-36 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"
+        >
+          Find Book
+        </button>
+        {/* Nút Change Font */}
         <button
           onClick={handleFontChange}
           className="absolute bottom-0 right-0 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"

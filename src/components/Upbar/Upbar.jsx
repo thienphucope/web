@@ -61,6 +61,7 @@ const Upbar = ({ username }) => {
   const [isSending, setIsSending] = useState(false);
   const [selectedFont, setSelectedFont] = useState("Charmonman");
   const [awaitingFontChoice, setAwaitingFontChoice] = useState(false);
+  const [awaitingBookTitle, setAwaitingBookTitle] = useState(false); // Thêm state cho Find Book
 
   const polaroidRef = useRef(null);
   const chatHistoryRef = useRef(null);
@@ -115,13 +116,39 @@ const Upbar = ({ username }) => {
         setSelectedFont(selected);
         const fontMessage = fontOptions[selected].message;
         setConvo((prev) => [
-          ...prev.slice(0, -2),
+          ...prev.slice(0, - погодите2),
           { role: "assistant", parts: [{ text: "" }] },
         ]);
         setStreamingText("");
         setIsStreaming(true);
         streamResponse(`${fontMessage}`);
         setAwaitingFontChoice(false);
+      } else if (awaitingBookTitle) {
+        // Gửi request đến endpoint /book
+        const response = await fetch("https://rag-backend-zh2e.onrender.com/book", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: currentQuestion }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to find book (${response.status})`);
+        }
+
+        const data = await response.json();
+        const reply = data.pdf_link
+          ? `Here’s the PDF link for "${currentQuestion}": \n\n ${data.pdf_link} \n\n Open this link in new tab! Make sure it has .pdf extension before you download!` 
+          : `Sorry, I couldn’t find a PDF for "${currentQuestion}"!`;
+
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
+          return newConvo;
+        });
+        setStreamingText("");
+        setIsStreaming(true);
+        streamResponse(reply);
+        setAwaitingBookTitle(false); // Quay lại chế độ hỏi đáp AI
       } else {
         const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
           method: "POST",
@@ -184,6 +211,18 @@ const Upbar = ({ username }) => {
     }, 5);
   };
 
+  const handleFindBook = () => {
+    setConvo((prev) => [
+      ...prev,
+      { role: "assistant", parts: [{ text: "" }] },
+    ]);
+    setStreamingText("");
+    setIsStreaming(true);
+    streamResponse("Let me know your wanted book title! I will find it for you!");
+    setAwaitingBookTitle(true);
+  };
+
+  // Giữ nguyên các useEffect và function khác
   useEffect(() => {
     if (chatHistoryRef.current && toggleMode === "history") {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
@@ -320,7 +359,6 @@ const Upbar = ({ username }) => {
     <div className="w-full h-full flex flex-col items-center justify-between">
       {username && (
         <div className="flex-1 w-full flex flex-col items-center overflow-hidden">
-          {/* Phần nội dung chính: ChatHistory hoặc SubtitleDisplay */}
           <div className="flex-1 w-full overflow-y-auto overflow-x-hidden">
             {toggleMode === "history" && (
               <ChatHistory
@@ -328,6 +366,7 @@ const Upbar = ({ username }) => {
                 username={username}
                 handleClose={handleClose}
                 handleFontChange={handleFontChange}
+                handleFindBook={handleFindBook} // Truyền hàm handleFindBook
                 polaroidSize={polaroidSize}
                 handleMouseDown={handleMouseDown}
                 handleResizeStart={handleResizeStart}
@@ -343,7 +382,6 @@ const Upbar = ({ username }) => {
               />
             )}
           </div>
-          {/* SearchBar luôn hiển thị */}
           <div className="p-3 w-full flex justify-center">
             <SearchBar
               question={question}
