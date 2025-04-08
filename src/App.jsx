@@ -148,7 +148,7 @@ function App() {
       {/* Upbar */}
       <div
         ref={upbarRef}
-        className="fixed top-2 bottom-2 left-1/2 transform -translate-x-1/2 w-full max-w-full md:w-1/2 p-3 z-20 font-sans"
+        className="fixed top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-full md:w-1/2 p-1 z-20 font-sans"
       >
         <Upbar username={username} />
       </div>
