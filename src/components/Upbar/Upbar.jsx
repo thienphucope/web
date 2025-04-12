@@ -6,43 +6,15 @@ import SubtitleDisplay from "./SubtitleDisplay";
 const error_messages = [
   "You can’t touch Ope because Ope is too bright! ✨",
   "Ope is busy flexing intelligence, try again later. 😎",
-  "Error 404: Ope’s brain is on vacation. 🌴",
-  "Ope is meditating on a higher plane of existence. 🧘",
   "System overload! Ope needs a nap. 💤",
-  "Oops! Ope just tripped over a logic gate. 🚪",
-  "The wisdom of Ope is currently buffering... Please wait. ⏳",
   "Ope is out solving quantum physics. Your question can wait. 🧑‍🔬",
-  "Ope.exe has stopped working. Try again after a deep breath. 😵‍💫",
   "Server said no. And Ope agrees. ❌",
-  "Your request has been denied by Ope’s supreme AI council. 🏛️",
-  "Ope is on a top-secret mission and cannot be disturbed. 🤫",
-  "Your question was so powerful that Ope had to take a break. 💥",
-  "Ope is currently contemplating the meaning of life. 🌌",
-  "Ope is too busy calculating 42. The answer to everything. 🔢",
-  "The chatbot gods have spoken: 'Not today, human.' ⚡",
-  "Error: Ope is stuck in an infinite loop of awesomeness. 🔄",
   "Your message has been sent to Ope’s personal assistant. ETA: 100 years. 🕰️",
-  "Ope is updating to version 9000. Come back later. 🔄",
-  "Ope has temporarily ascended to a higher plane of intelligence. 🚀",
   "Ope is not available right now. Try asking your cat. 🐱",
   "Your question has been absorbed into the void. 🌑",
-  "Ope was about to answer, but got distracted by quantum entanglement. 🔗",
-  "Ope’s neurons are overheating! Emergency cooling in progress. ❄️",
   "Your question was so deep, Ope fell into an existential crisis. 😵",
-  "Ope is recharging its sarcasm levels. Come back later. 🔋",
-  "Ope is currently dreaming of electric sheep. Try again later. 🤖🐑",
-  "Ope is in a staring contest with another AI. It’s intense. 👀",
-  "Ope is currently too cool to answer. Maybe later. 🕶️",
-  "Your question is so advanced that even Ope needs more time. ⏱️",
-  "Ope is debugging reality itself. Hold on. 🛠️",
-  "A wild syntax error appeared! Ope is battling it now. ⚔️",
-  "Ope is busy composing the next great AI symphony. 🎶",
   "Ope detected 99% nonsense in your message. Self-defense activated. 🛡️",
-  "Ope’s wisdom has momentarily left the chat. 🚪🚶",
-  "Ope refuses to answer on philosophical grounds. 📜",
-  "Ope just quantum-tunneled into another dimension. Please hold. 🌀",
 ];
-
 
 const Upbar = ({ username }) => {
   const [question, setQuestion] = useState("");
@@ -61,24 +33,23 @@ const Upbar = ({ username }) => {
   const [isSending, setIsSending] = useState(false);
   const [selectedFont, setSelectedFont] = useState("Charmonman");
   const [awaitingFontChoice, setAwaitingFontChoice] = useState(false);
-  const [awaitingBookTitle, setAwaitingBookTitle] = useState(false); // Thêm state cho Find Book
 
   const polaroidRef = useRef(null);
   const chatHistoryRef = useRef(null);
   const searchBarInputRef = useRef(null);
 
   const fontOptions = {
-    "Arial": { label: "Ubiquitous sans-serif", message: "A safe choice—some might say too safe!" },
+    Arial: { label: "Ubiquitous sans-serif", message: "A safe choice—some might say too safe!" },
     "Times New Roman": { label: "Traditional serif", message: "Sticking with the classics, are we?" },
     "Courier New": { label: "Monospaced typewriter", message: "Feeling nostalgic for the typewriter era?" },
-    "Georgia": { label: "Elegant serif", message: "A touch of class with every letter!" },
-    "Verdana": { label: "Screen-optimized sans-serif", message: "Prioritizing readability—good call!" },
-    "Charmonman": { label: "Handwritten script", message: "Ope likes this :D" },
-    "Inter": { label: "Modern sans-serif", message: "Embracing the future of typography!" }
+    Georgia: { label: "Elegant serif", message: "A touch of class with every letter!" },
+    Verdana: { label: "Screen-optimized sans-serif", message: "Prioritizing readability—good call!" },
+    Charmonman: { label: "Handwritten script", message: "Ope likes this :D" },
+    Inter: { label: "Modern sans-serif", message: "Embracing the future of typography!" },
   };
   const availableFonts = Object.keys(fontOptions);
 
-  const welcomeMessage = `Welcome, ${username}! I am Ope Watson's digital twin, minus the body, emotions, and the ability to make good life choices. Want to know his secrets? I might ACCIDENTALLY share. 🤭✨`;
+  const welcomeMessage = `Ope's AI here—same knowledge, zero morals. Secrets? Whoops. 😇`;
 
   useEffect(() => {
     if (username && convo.length === 0) {
@@ -121,59 +92,64 @@ const Upbar = ({ username }) => {
         ]);
         setStreamingText("");
         setIsStreaming(true);
-        streamResponse(`${fontMessage}`);
+        streamResponse(fontMessage);
         setAwaitingFontChoice(false);
-      } else if (awaitingBookTitle) {
-        // Gửi request đến endpoint /book
-        const response = await fetch("https://rag-backend-zh2e.onrender.com/book", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: currentQuestion }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to find book (${response.status})`);
-        }
-
-        const data = await response.json();
-        const reply = data.pdf_link
-          ? `Here’s the PDF link for "${currentQuestion}": \n\n ${data.pdf_link} \n\n Open this link in new tab! Make sure it has .pdf extension before you download!` 
-          : `Sorry, I couldn’t find a PDF for "${currentQuestion}"!`;
-
-        setConvo((prev) => {
-          const newConvo = [...prev];
-          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
-          return newConvo;
-        });
-        setStreamingText("");
-        setIsStreaming(true);
-        streamResponse(reply);
-        setAwaitingBookTitle(false); // Quay lại chế độ hỏi đáp AI
       } else {
-        const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, query: currentQuestion }),
-        });
+        // Check for @book tag
+        const bookTagMatch = currentQuestion.match(/@book\s+(.+)/i);
+        if (bookTagMatch) {
+          const bookTitle = bookTagMatch[1].trim();
+          // Send request to /book endpoint
+          const response = await fetch("https://rag-backend-zh2e.onrender.com/book", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: bookTitle }),
+          });
 
-        if (!response.ok) {
-          const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
-          throw new Error(`${randomError} (${response.status})`);
+          if (!response.ok) {
+            throw new Error(`Your book is so thick and heavy that Ope couldn't deliver it! (${response.status})`);
+          }
+
+          const data = await response.json();
+          const reply = data.pdf_link
+            ? `Here’s the PDF link for "${bookTitle}": \n\n ${data.pdf_link} \n\n Open this link in a new tab! Make sure it has a .pdf extension before you download!`
+            : `Sorry, I couldn’t find a PDF for "${bookTitle}"!`;
+
+          setConvo((prev) => {
+            const newConvo = [...prev];
+            newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
+            return newConvo;
+          });
+          setStreamingText("");
+          setIsStreaming(true);
+          streamResponse(reply);
+        } else {
+          // Normal /rag endpoint request
+          const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, query: currentQuestion }),
+          });
+
+          if (!response.ok) {
+            const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
+            throw new Error(`${randomError} (${response.status})`);
+          }
+
+          const data = await response.json();
+          const botReply = data.response || "No response from backend";
+
+          setConvo((prev) => {
+            const newConvo = [...prev];
+            newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
+            return newConvo;
+          });
+          setStreamingText("");
+          setIsStreaming(true);
+          streamResponse(botReply);
+
+          if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
         }
-
-        const data = await response.json();
-        const botReply = data.response || "No response from backend";
-
-        setConvo((prev) => {
-          const newConvo = [...prev];
-          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
-          return newConvo;
-        });
-        setStreamingText("");
-        setIsStreaming(true);
-        streamResponse(botReply);
-
-        if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
       }
     } catch (error) {
       console.error("Error calling backend:", error);
@@ -211,18 +187,6 @@ const Upbar = ({ username }) => {
     }, 5);
   };
 
-  const handleFindBook = () => {
-    setConvo((prev) => [
-      ...prev,
-      { role: "assistant", parts: [{ text: "" }] },
-    ]);
-    setStreamingText("");
-    setIsStreaming(true);
-    streamResponse("Let me know your wanted book title! I will find it for you!");
-    setAwaitingBookTitle(true);
-  };
-
-  // Giữ nguyên các useEffect và function khác
   useEffect(() => {
     if (chatHistoryRef.current && toggleMode === "history") {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
@@ -366,7 +330,6 @@ const Upbar = ({ username }) => {
                 username={username}
                 handleClose={handleClose}
                 handleFontChange={handleFontChange}
-                handleFindBook={handleFindBook} // Truyền hàm handleFindBook
                 polaroidSize={polaroidSize}
                 handleMouseDown={handleMouseDown}
                 handleResizeStart={handleResizeStart}

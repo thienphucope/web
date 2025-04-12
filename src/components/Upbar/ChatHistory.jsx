@@ -58,13 +58,7 @@ const ChatHistory = ({
             ))}
           </div>
         </div>
-        {/* Nút Find Book */}
-        <button
-          onClick={handleFindBook}
-          className="absolute bottom-0 right-36 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"
-        >
-          Find Book
-        </button>
+
         {/* Nút Change Font */}
         <button
           onClick={handleFontChange}
