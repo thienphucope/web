@@ -49,7 +49,8 @@ const Upbar = ({ username }) => {
   };
   const availableFonts = Object.keys(fontOptions);
 
-  const welcomeMessage = `Ope's AI here—same knowledge, zero morals. Secrets? Whoops. 😇`;
+  const welcomeMessage = `Ope's AI — same memory, no filter.\nTalk to me like you mean it — I remember, I reply, I roast (sometimes). My memory is stored in English, so speak English if you want me to *think* like Ope. Use another language? I'll still chat, but you'll just get the default bot version. Meh.\n\nTweak your view or stir the chaos:\n1. Hit Change Font if your eyes are crying.\n2. Type m to unmute the background... but hey, don’t say I didn’t warn you.\n\nDig deeper if you're feeling nosy:\n3. Type @book <title> to fetch that PDF you *forgot you needed*.\n4. Need REAL me directly? Slide in with @dm <message> — I always hear whispers. 😇\n\nSecrets? Oh, they don’t stay secret for long in here.
+`;
 
   useEffect(() => {
     if (username && convo.length === 0) {
