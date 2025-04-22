@@ -68,6 +68,8 @@ function App() {
     };
   }, []);
 
+  
+
   const onPlayerReady = (event) => {
     const player = event.target;
     player.setShuffle(true);

@@ -31,7 +31,7 @@ const Upbar = ({ username }) => {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [selectedFont, setSelectedFont] = useState("Charmonman");
+  const [selectedFont, setSelectedFont] = useState("Courier New");
   const [awaitingFontChoice, setAwaitingFontChoice] = useState(false);
 
   const polaroidRef = useRef(null);
@@ -49,8 +49,16 @@ const Upbar = ({ username }) => {
   };
   const availableFonts = Object.keys(fontOptions);
 
-  const welcomeMessage = `Ope's AI — same memory, no filter.\nTalk to me like you mean it — I remember, I reply, I roast (sometimes). My memory is stored in English, so speak English if you want me to THINK like Ope. Use another language? I'll still chat, but you'll just get the default bot version. Meh.\n\nTweak your view or stir the chaos:\n1. Hit Change Font if your eyes are crying.\n2. Type m to unmute the background... but hey, don’t say I didn’t warn you.\n3. Type @book <title> to fetch that PDF you FORGOT YOU NEED.\n4. Need REAL me directly? Slide in with @dm <message> — I always hear whispers.\n\nSecrets? Oh, they don’t stay secret for long in here.
-`;
+  const welcomeMessage = `This is Ope's AI — built with my memory, no filter. Talk to me like you mean it — I remember, I reply, I roast (sometimes). My memory is stored in English, so speak English if you want me to THINK like Ope.
+
+Unleash the chaos or fine-tune your vibe with these commands:\n
+  @changefont — Switch up the font style.
+  @book <title> — Search for PDF versions of your favorite books.
+  @dm <message> — Send a private message straight to real Ope.
+
+Nothing stays hidden for long here. Secrets have ears.`;
+
+
 
   useEffect(() => {
     if (username && convo.length === 0) {
@@ -71,13 +79,14 @@ const Upbar = ({ username }) => {
     setIsSending(true);
     setConvo((prev) => [
       ...prev,
-      { role: "user", parts: [{ text: question }] },
+      { role: "user", parts: [{ text: question + "\n" }] },
       { role: "assistant", parts: [{ text: "Thinking" }] },
     ]);
     const currentQuestion = question;
     setQuestion("");
 
     try {
+      // Handle font choice if awaiting
       if (awaitingFontChoice) {
         const numberMatch = currentQuestion.match(/\d+/);
         const fontIndex = numberMatch ? parseInt(numberMatch[0], 10) - 1 : -1;
@@ -95,65 +104,110 @@ const Upbar = ({ username }) => {
         setIsStreaming(true);
         streamResponse(fontMessage);
         setAwaitingFontChoice(false);
-      } else {
-        // Check for @book tag
-        const bookTagMatch = currentQuestion.match(/@book\s+(.+)/i);
-        if (bookTagMatch) {
-          const bookTitle = bookTagMatch[1].trim();
-          // Send request to /book endpoint
-          const response = await fetch("https://rag-backend-zh2e.onrender.com/book", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: bookTitle }),
-          });
+        return;
+      }
 
-          if (!response.ok) {
-            throw new Error(`Your book is so thick and heavy that Ope couldn't deliver it! (${response.status})`);
-          }
+      // Check for commands
+      const bookTagMatch = currentQuestion.match(/@book\s+(.+)/i);
+      const dmTagMatch = currentQuestion.match(/@dm\s+(.+)/i);
+      const changeFontMatch = currentQuestion.match(/@changefont/i);
 
-          const data = await response.json();
-          const reply = data.pdf_link
-            ? `Here’s the PDF link for "${bookTitle}": \n\n ${data.pdf_link} \n\n Open this link in a new tab! Make sure it has a .pdf extension before you download!`
-            : `Sorry, I couldn’t find a PDF for "${bookTitle}"!`;
-
-          setConvo((prev) => {
-            const newConvo = [...prev];
-            newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
-            return newConvo;
-          });
-          setStreamingText("");
-          setIsStreaming(true);
-          streamResponse(reply);
-        } else {
-          // Normal /rag endpoint request
-          const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, query: currentQuestion }),
-          });
-
-          if (!response.ok) {
-            const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
-            throw new Error(`${randomError} (${response.status})`);
-          }
-
-          const data = await response.json();
-          const botReply = data.response || "No response from backend";
-
-          setConvo((prev) => {
-            const newConvo = [...prev];
-            newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
-            return newConvo;
-          });
-          setStreamingText("");
-          setIsStreaming(true);
-          streamResponse(botReply);
-
-          if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
+      if (bookTagMatch) {
+        const bookTitle = bookTagMatch[1].trim();
+        const response = await fetch("https://rag-backend-zh2e.onrender.com/book", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: bookTitle }),
+        });
+      
+        if (!response.ok) {
+          throw new Error(`Your book is so thick and heavy that Ope couldn't deliver it! (${response.status})`);
         }
+      
+        const data = await response.json();
+      
+        const reply = {
+          role: "assistant",
+          parts: [
+            {
+              text: data.pdf_link ? (
+                <>
+                  Here’s your book:{" "}
+                  <a
+                    href={data.pdf_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-blue-400 hover:text-blue-600"
+                  >
+                    {bookTitle}
+                  </a>
+                </>
+              ) : (
+                `Sorry, I couldn’t find a PDF for "${bookTitle}"!`
+              ),
+            },
+          ],
+        };
+      
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = reply;
+          return newConvo;
+        });
+        setStreamingText("");
+        setIsStreaming(false);
+      } else if (dmTagMatch) {
+        const message = dmTagMatch[1].trim();
+        const reply = `Your message "${message}" has been noted. Ope might get back to you... or maybe not. 😎`;
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
+          return newConvo;
+        });
+        setStreamingText("");
+        setIsStreaming(true);
+        streamResponse(reply);
+      } else if (changeFontMatch) {
+        const fontList = availableFonts
+          .map((font, index) => `${index + 1}. ${fontOptions[font].label}`)
+          .join("\n");
+        setConvo((prev) => [
+          ...prev.slice(0, -1),
+          { role: "assistant", parts: [{ text: "" }] },
+        ]);
+        setStreamingText("");
+        setIsStreaming(true);
+        streamResponse(`What is your favourite font? Write a number!\n${fontList}`);
+        setAwaitingFontChoice(true);
+      } else {
+        // Normal /rag endpoint request
+        const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, query: currentQuestion }),
+        });
+
+        if (!response.ok) {
+          const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
+          throw new Error(`${randomError} (${response.status})`);
+        }
+
+        const data = await response.json();
+        const botReply = data.response || "No response from backend";
+
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
+          return newConvo;
+        });
+        setStreamingText("");
+        setIsStreaming(true);
+        streamResponse(botReply);
+
+        if (toggleMode === "subtitle") startSubtitleAnimation(botReply);
       }
     } catch (error) {
-      console.error("Error calling backend:", error);
+      console.error("Error processing request:", error);
       const errorMessage =
         error.message === "Failed to fetch"
           ? `${error_messages[Math.floor(Math.random() * error_messages.length)]} (f2f)`
@@ -166,27 +220,41 @@ const Upbar = ({ username }) => {
     }
   };
 
-  const streamResponse = (fullText) => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index <= fullText.length) {
-        const currentText = fullText.slice(0, index);
-        setStreamingText(currentText);
-        setConvo((prev) => {
-          const newConvo = [...prev];
-          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: currentText }] };
-          return newConvo;
-        });
-        if (chatHistoryRef.current) {
-          chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
-        }
-        index++;
-      } else {
-        clearInterval(interval);
-        setIsStreaming(false);
+const streamResponse = (fullText) => {
+  let index = 0;
+  const interval = setInterval(() => {
+    if (index <= fullText.length) {
+      const currentText = fullText.slice(0, index);
+      setStreamingText(currentText);
+      setConvo((prev) => {
+        const newConvo = [...prev];
+        newConvo[newConvo.length - 1] = {
+          role: "assistant",
+          parts: [{ text: currentText }],
+          isStreaming: true, // Indicate streaming is ongoing
+        };
+        return newConvo;
+      });
+      if (chatHistoryRef.current) {
+        chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
       }
-    }, 5);
-  };
+      index++;
+    } else {
+      clearInterval(interval);
+      setIsStreaming(false);
+      // Update convo to mark streaming as complete
+      setConvo((prev) => {
+        const newConvo = [...prev];
+        newConvo[newConvo.length - 1] = {
+          role: "assistant",
+          parts: [{ text: fullText }],
+          isStreaming: false, // Streaming is complete
+        };
+        return newConvo;
+      });
+    }
+  }, 5);
+};
 
   useEffect(() => {
     if (chatHistoryRef.current && toggleMode === "history") {
@@ -275,20 +343,6 @@ const Upbar = ({ username }) => {
     setToggleMode(toggleMode === "history" ? "subtitle" : "history");
   };
 
-  const handleFontChange = () => {
-    const fontList = availableFonts
-      .map((font, index) => `${index + 1}. ${fontOptions[font].label}`)
-      .join("\n");
-    setConvo((prev) => [
-      ...prev,
-      { role: "assistant", parts: [{ text: "" }] },
-    ]);
-    setStreamingText("");
-    setIsStreaming(true);
-    streamResponse(`What is your favourite font? Write a number!\n${fontList}`);
-    setAwaitingFontChoice(true);
-  };
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       const activeElement = document.activeElement;
@@ -297,7 +351,8 @@ const Upbar = ({ username }) => {
         activeElement.tagName === "TEXTAREA" ||
         activeElement.isContentEditable;
 
-      if (e.key === "/" && !isInputFocused) {
+      // If no input is focused and the key is not 'm', focus the search bar
+      if (!isInputFocused && e.key !== 'm') {
         e.preventDefault();
         if (searchBarInputRef.current) {
           searchBarInputRef.current.focus();
@@ -330,7 +385,6 @@ const Upbar = ({ username }) => {
                 convo={convo}
                 username={username}
                 handleClose={handleClose}
-                handleFontChange={handleFontChange}
                 polaroidSize={polaroidSize}
                 handleMouseDown={handleMouseDown}
                 handleResizeStart={handleResizeStart}

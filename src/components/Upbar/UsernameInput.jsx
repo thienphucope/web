@@ -9,6 +9,8 @@ const UsernameInput = ({ onUsernameSubmit }) => {
     }
   };
 
+  
+
   return (
     <div className="bg-transparent p-6 rounded-lg border-2 border-white/50 w-[300px]">
       <h2 className="text-xl font-handwritten mb-4 text-white">Ope Watson's AI</h2>

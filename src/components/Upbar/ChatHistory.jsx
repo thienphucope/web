@@ -36,19 +36,18 @@ const ChatHistory = ({
         </h3>
         <div
           ref={chatHistoryRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-text text-[1.3125rem] flex flex-col"
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-text text-[1.125rem] flex flex-col"
         >
           <div className="flex flex-col mt-auto">
             {convo.map((message, index) => (
-              <div key={index} className="mb-2 cursor-default">
+              <div key={index} className="mb-2 cursor-default text-justify px-1">
                 <div className="font-handwritten mb-1 text-white inline">
-                  {message.role === "user" ? `${username}: ` : "Ope: "}
+                  {message.role === "user" ? `${username.toUpperCase()}: ` : "OPE: "}
                 </div>
                 <div className="text-white inline font-handwritten break-words whitespace-pre-line">
                   {message.parts[0].text}
                   {message.role === "assistant" && (
                     <>
-                      <br />
                       <br />
                     </>
                   )}
@@ -58,14 +57,6 @@ const ChatHistory = ({
             ))}
           </div>
         </div>
-
-        {/* Nút Change Font */}
-        <button
-          onClick={handleFontChange}
-          className="absolute bottom-0 right-0 bg-transparent p-2 rounded-full border-2 border-white/50 text-white font-handwritten text-base hover:border-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200 z-40"
-        >
-          Change Font
-        </button>
       </div>
       <div
         className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize"
