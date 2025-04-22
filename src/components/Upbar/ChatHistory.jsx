@@ -17,26 +17,20 @@ const ChatHistory = ({
   return (
     <div
       ref={polaroidRef}
-      className="bg-transparent border-2 border-white shadow-lg rounded-md p-3 pt-4 transform cursor-default w-full h-full"
+      className="bg-transparent border-2 border-white shadow-lg rounded-md p-0 pt-4 transform cursor-default w-full h-full"
       style={{
         maxWidth: "100%",
         minWidth: "320px", // Đảm bảo container đủ rộng
       }}
       onMouseDown={handleMouseDown}
     >
-      <button
-        className="absolute top-[-2px] right-[-2px] text-gray-400 hover:text-white transition-colors z-10 bg-transparent border-0 outline-none"
-        onClick={handleClose}
-      >
-        ✕
-      </button>
       <div className="bg-transparent p-0 pt-0 h-full flex flex-col relative">
         <h3 className="text-center font-handwritten text-white mb-2 text-base cursor-default select-none pt-0 py-1 rounded-t-md">
           Chat History
         </h3>
         <div
           ref={chatHistoryRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-text text-[1.125rem] flex flex-col"
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent px-2 pb-0 rounded-sm scrollbar-hide select-text text-[1rem] flex flex-col"
         >
           <div className="flex flex-col mt-auto">
             {convo.map((message, index) => (
