@@ -49,15 +49,7 @@ const Upbar = ({ username }) => {
   };
   const availableFonts = Object.keys(fontOptions);
 
-  const welcomeMessage = `This is Ope's AI — built with my memory, no filter. Talk to me like you mean it — I remember, I reply, I roast (sometimes). My memory is stored in English, so speak English if you want me to THINK like Ope.
-
-Unleash the chaos or fine-tune your vibe with these commands:\n
-  @changefont — Switch up the font style.
-  @book <title> — Search for PDF versions of your favorite books.
-  @dm <message> — Send a private message straight to real Ope.
-
-Nothing stays hidden for long here. Secrets have ears.`;
-
+  const welcomeMessage = `This is Ope's AI — built with my memory, no filter. Talk to me like you mean it — I remember, I reply, I roast (sometimes). My memory is stored in English, so speak English if you want me to THINK like Ope. Nothing stays hidden for long here. Secrets have ears.`;
 
 
   useEffect(() => {
@@ -110,7 +102,7 @@ Nothing stays hidden for long here. Secrets have ears.`;
       // Check for commands
       const bookTagMatch = currentQuestion.match(/@book\s+(.+)/i);
       const dmTagMatch = currentQuestion.match(/@dm\s+(.+)/i);
-      const changeFontMatch = currentQuestion.match(/@changefont/i);
+      const changeFontMatch = currentQuestion.match(/@font/i);
 
       if (bookTagMatch) {
         const bookTitle = bookTagMatch[1].trim();
@@ -156,17 +148,7 @@ Nothing stays hidden for long here. Secrets have ears.`;
         });
         setStreamingText("");
         setIsStreaming(false);
-      } else if (dmTagMatch) {
-        const message = dmTagMatch[1].trim();
-        const reply = `Your message "${message}" has been noted. Ope might get back to you... or maybe not. 😎`;
-        setConvo((prev) => {
-          const newConvo = [...prev];
-          newConvo[newConvo.length - 1] = { role: "assistant", parts: [{ text: "" }] };
-          return newConvo;
-        });
-        setStreamingText("");
-        setIsStreaming(true);
-        streamResponse(reply);
+
       } else if (changeFontMatch) {
         const fontList = availableFonts
           .map((font, index) => `${index + 1}. ${fontOptions[font].label}`)
