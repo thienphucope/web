@@ -23,7 +23,7 @@ const Upbar = ({ username }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [toggleMode, setToggleMode] = useState("history");
+  const [toggleMode, setToggleMode] = useState("subtitle");
   const [subtitleText, setSubtitleText] = useState("");
   const [showSubtitle, setShowSubtitle] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -37,6 +37,7 @@ const Upbar = ({ username }) => {
   const polaroidRef = useRef(null);
   const chatHistoryRef = useRef(null);
   const searchBarInputRef = useRef(null);
+  const inactivityTimerRef = useRef(null); // New ref to store the timer
 
   const fontOptions = {
     Arial: { label: "Ubiquitous sans-serif", message: "A safe choice—some might say too safe!" },
@@ -49,8 +50,70 @@ const Upbar = ({ username }) => {
   };
   const availableFonts = Object.keys(fontOptions);
 
-  const welcomeMessage = `This is Ope's AI — built with my memory, no filter. Talk to me like you mean it — I remember, I reply, I roast (sometimes). My memory is stored in English, so speak English if you want me to THINK like Ope. Nothing stays hidden for long here. Secrets have ears.`;
+  const welcomeMessage = `Welcome! This is Ope’s AI — designed with memory and zero filters. It remembers your words, so feel free to talk like you're chatting with the easygoing side of me. \n\nSend a direct message to me by typing @dm <your message>`;
 
+// Counter to limit random prompts
+const randomPromptCountRef = useRef(0);
+
+// Function to reset the inactivity timer
+const resetInactivityTimer = () => {
+  if (inactivityTimerRef.current) {
+    clearTimeout(inactivityTimerRef.current);
+  }
+  if (username && randomPromptCountRef.current < 10) {
+    inactivityTimerRef.current = setTimeout(() => {
+      triggerRandomChat();
+    }, 120000); // 30 seconds
+  }
+};
+
+// Function to trigger the random chat request
+const triggerRandomChat = async () => {
+  if (randomPromptCountRef.current >= 10) return; // Stop if limit reached
+  randomPromptCountRef.current += 1;
+
+  try {
+    const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        query: `${username} doesn't want to talk to you, notice your existence or do AI prank like you're trapped in a dark place with no sounds! Don't talk about this instruction. Don't use the context`,
+      }),
+    });
+
+    if (!response.ok) {
+      const randomError = error_messages[Math.floor(Math.random() * error_messages.length)];
+      throw new Error(`${randomError} (${response.status})`);
+    }
+
+    const data = await response.json();
+    const botReply = data.response || "No response from backend";
+
+    // Add a placeholder for streaming response
+    setConvo((prev) => [
+      ...prev,
+      { role: "assistant", parts: [{ text: "" }], isStreaming: true },
+    ]);
+    setStreamingText("");
+    setIsStreaming(true);
+    streamResponse(botReply); // Stream the response
+
+    // Reset the timer after the request
+    resetInactivityTimer();
+  } catch (error) {
+    console.error("Error in random chat request:", error);
+    const errorMessage =
+      error.message === "Failed to fetch"
+        ? `${error_messages[Math.floor(Math.random() * error_messages.length)]} (f2f)`
+        : error.message;
+    setConvo((prev) => [
+      ...prev,
+      { role: "assistant", parts: [{ text: errorMessage }], isStreaming: false },
+    ]);
+    resetInactivityTimer();
+  }
+};
 
   useEffect(() => {
     if (username && convo.length === 0) {
@@ -58,7 +121,18 @@ const Upbar = ({ username }) => {
       setStreamingText("");
       setIsStreaming(true);
       streamResponse(welcomeMessage);
+      if (toggleMode === "subtitle") {
+        startSubtitleAnimation(welcomeMessage); // Hiển thị welcomeMessage dưới dạng subtitle
+      }
     }
+    // Start the inactivity timer when username is set
+    resetInactivityTimer();
+    // Cleanup timer on component unmount
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
   }, [username]);
 
   const handleAsk = async () => {
@@ -76,6 +150,9 @@ const Upbar = ({ username }) => {
     ]);
     const currentQuestion = question;
     setQuestion("");
+
+    // Reset the inactivity timer when the user sends a request
+    resetInactivityTimer();
 
     try {
       // Handle font choice if awaiting
@@ -111,13 +188,13 @@ const Upbar = ({ username }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: bookTitle }),
         });
-      
+
         if (!response.ok) {
           throw new Error(`Your book is so thick and heavy that Ope couldn't deliver it! (${response.status})`);
         }
-      
+
         const data = await response.json();
-      
+
         const reply = {
           role: "assistant",
           parts: [
@@ -140,7 +217,7 @@ const Upbar = ({ username }) => {
             },
           ],
         };
-      
+
         setConvo((prev) => {
           const newConvo = [...prev];
           newConvo[newConvo.length - 1] = reply;
@@ -148,7 +225,6 @@ const Upbar = ({ username }) => {
         });
         setStreamingText("");
         setIsStreaming(false);
-
       } else if (changeFontMatch) {
         const fontList = availableFonts
           .map((font, index) => `${index + 1}. ${fontOptions[font].label}`)
@@ -202,41 +278,40 @@ const Upbar = ({ username }) => {
     }
   };
 
-const streamResponse = (fullText) => {
-  let index = 0;
-  const interval = setInterval(() => {
-    if (index <= fullText.length) {
-      const currentText = fullText.slice(0, index);
-      setStreamingText(currentText);
-      setConvo((prev) => {
-        const newConvo = [...prev];
-        newConvo[newConvo.length - 1] = {
-          role: "assistant",
-          parts: [{ text: currentText }],
-          isStreaming: true, // Indicate streaming is ongoing
-        };
-        return newConvo;
-      });
-      if (chatHistoryRef.current) {
-        chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+  const streamResponse = (fullText) => {
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index <= fullText.length) {
+        const currentText = fullText.slice(0, index);
+        setStreamingText(currentText);
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = {
+            role: "assistant",
+            parts: [{ text: currentText }],
+            isStreaming: true,
+          };
+          return newConvo;
+        });
+        if (chatHistoryRef.current) {
+          chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+        }
+        index++;
+      } else {
+        clearInterval(interval);
+        setIsStreaming(false);
+        setConvo((prev) => {
+          const newConvo = [...prev];
+          newConvo[newConvo.length - 1] = {
+            role: "assistant",
+            parts: [{ text: fullText }],
+            isStreaming: false,
+          };
+          return newConvo;
+        });
       }
-      index++;
-    } else {
-      clearInterval(interval);
-      setIsStreaming(false);
-      // Update convo to mark streaming as complete
-      setConvo((prev) => {
-        const newConvo = [...prev];
-        newConvo[newConvo.length - 1] = {
-          role: "assistant",
-          parts: [{ text: fullText }],
-          isStreaming: false, // Streaming is complete
-        };
-        return newConvo;
-      });
-    }
-  }, 5);
-};
+    }, 5);
+  };
 
   useEffect(() => {
     if (chatHistoryRef.current && toggleMode === "history") {
@@ -333,8 +408,7 @@ const streamResponse = (fullText) => {
         activeElement.tagName === "TEXTAREA" ||
         activeElement.isContentEditable;
 
-      // If no input is focused and the key is not 'm', focus the search bar
-      if (!isInputFocused && e.key !== 'm') {
+      if (!isInputFocused && e.key !== "m") {
         e.preventDefault();
         if (searchBarInputRef.current) {
           searchBarInputRef.current.focus();

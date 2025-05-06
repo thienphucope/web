@@ -26,7 +26,7 @@ const SearchBar = ({
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         onKeyPress={handleKeyPress}
-        placeholder="Ask Ope Watson anything"
+        placeholder="Ask Ope Watson anything!"
         className="p-3 pl-4 pr-20 rounded-full text-white w-full bg-transparent ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white text-base font-handwritten placeholder-gray-400 transition-all duration-200"
         disabled={isSending}
       />
@@ -54,7 +54,7 @@ const SearchBar = ({
         onClick={toggleModeSwitch}
         className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent p-1 w-8 h-8 flex items-center justify-center text-white rounded-full ring-2 ring-white/50 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white transition-all duration-200"
       >
-        {toggleMode === "history" ? "📋" : "📌"}
+        {toggleMode === "history" ? "📌" : "📋"}
       </button>
     </div>
   );

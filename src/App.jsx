@@ -18,13 +18,14 @@ function App() {
         width: "1920",
         playerVars: {
           listType: "playlist",
-          list: "PLpiBBQ_53Fb6ncNxd07dpUsEzL5JHrrk5",
+          list: "PLo2L9JmoQoy94NKhBLuQzFsAVKHVr5cmG",
           autoplay: 1,
           mute: 1,
           controls: 0,
           showinfo: 0,
           rel: 0,
           loop: 1,
+          setShuffle: 1,
         },
         events: {
           onReady: onPlayerReady,
